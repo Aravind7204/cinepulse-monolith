@@ -27,7 +27,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Removed JwtAuthenticationFilter from here to break the cycle
     private final UserRepository userRepository;
 
     @Bean
@@ -54,7 +53,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // Injected JwtAuthenticationFilter directly into this method instead
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -69,7 +67,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/movies/**", "/api/v1/shows/**").permitAll()
+                        // POST, PUT, and DELETE are now fully restricted to ADMIN
                         .requestMatchers(HttpMethod.POST, "/api/v1/movies/**", "/api/v1/theatres/**", "/api/v1/shows/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/movies/**", "/api/v1/theatres/**", "/api/v1/shows/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/movies/**", "/api/v1/theatres/**", "/api/v1/shows/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .build();
