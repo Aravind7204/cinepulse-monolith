@@ -21,10 +21,9 @@ public class MovieController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<MovieResponse>> addMovie(@Valid @RequestBody CreateMovieRequest request) {
-        MovieResponse created = movieService.createMovie(request);
+    public ResponseEntity<ApiResponse<MovieResponse>> createMovie(@Valid @RequestBody CreateMovieRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(created, "Movie registered successfully"));
+                .body(ApiResponse.created("Movie created successfully", movieService.createMovie(request)));
     }
 
     @GetMapping
@@ -40,5 +39,21 @@ public class MovieController {
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<List<MovieResponse>>> getMoviesByLanguage(@RequestParam String language) {
         return ResponseEntity.ok(ApiResponse.ok(movieService.getMoviesByLanguage(language)));
+    }
+
+    // --- New Admin Endpoints ---
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<MovieResponse>> updateMovie(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateMovieRequest request) {
+        MovieResponse updatedMovie = movieService.updateMovie(id, request);
+        return ResponseEntity.ok(ApiResponse.ok(updatedMovie, "Movie updated successfully"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteMovie(@PathVariable Long id) {
+        movieService.deleteMovie(id);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Movie deleted successfully"));
     }
 }

@@ -41,4 +41,20 @@ public class TheatreController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(screenId, "Screen and seat layout generated successfully"));
     }
+
+    // --- New Admin Endpoints ---
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<TheatreResponse>> updateTheatre(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateTheatreRequest request) {
+        TheatreResponse updatedTheatre = theatreService.updateTheatre(id, request);
+        return ResponseEntity.ok(ApiResponse.ok(updatedTheatre, "Theatre updated successfully"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTheatre(@PathVariable Long id) {
+        theatreService.deleteTheatre(id);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Theatre deleted successfully"));
+    }
 }

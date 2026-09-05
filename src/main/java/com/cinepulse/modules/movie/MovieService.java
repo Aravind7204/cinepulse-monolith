@@ -53,4 +53,28 @@ public class MovieService {
                 .map(MovieResponse::fromEntity)
                 .toList();
     }
+
+    @Transactional
+    public MovieResponse updateMovie(Long id, CreateMovieRequest request) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with id: " + id));
+
+        // Fixed to match your exact entity structure
+        movie.setTitle(request.title());
+        movie.setDescription(request.description());
+        movie.setLanguage(request.language());
+        movie.setGenre(request.genre());
+        movie.setDurationInMinutes(request.durationInMinutes());
+        movie.setReleaseDate(request.releaseDate());
+
+        return MovieResponse.fromEntity(movieRepository.save(movie));
+    }
+
+    @Transactional
+    public void deleteMovie(Long id) {
+        if (!movieRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Movie not found with id: " + id);
+        }
+        movieRepository.deleteById(id);
+    }
 }

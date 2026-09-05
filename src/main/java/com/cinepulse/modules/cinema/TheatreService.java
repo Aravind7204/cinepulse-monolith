@@ -73,4 +73,26 @@ public class TheatreService {
         screen.setSeats(seats);
         return screenRepository.save(screen).getId();
     }
+
+    // --- New Admin Methods ---
+
+    @Transactional
+    public TheatreResponse updateTheatre(Long id, CreateTheatreRequest request) {
+        Theatre theatre = theatreRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Theatre not found with id: " + id));
+
+        theatre.setName(request.name());
+        theatre.setCity(request.city());
+        theatre.setAddress(request.address());
+
+        return TheatreResponse.fromEntity(theatreRepository.save(theatre));
+    }
+
+    @Transactional
+    public void deleteTheatre(Long id) {
+        if (!theatreRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Theatre not found with id: " + id);
+        }
+        theatreRepository.deleteById(id);
+    }
 }
