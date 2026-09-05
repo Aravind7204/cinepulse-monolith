@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -51,5 +52,21 @@ public class BookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> getBookingById(@PathVariable Long id) {
         Long userId = securityUtils.getCurrentUserId();
         return ResponseEntity.ok(ApiResponse.ok(bookingService.getBookingById(userId, id)));
+    }
+
+    // --- New Booking Management Endpoints (CP-15) ---
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings() {
+        Long userId = securityUtils.getCurrentUserId();
+        List<BookingResponse> myBookings = bookingService.getUserBookings(userId);
+        return ResponseEntity.ok(ApiResponse.ok(myBookings, "Fetched user bookings successfully"));
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        BookingResponse cancelledBooking = bookingService.cancelBooking(userId, id);
+        return ResponseEntity.ok(ApiResponse.ok(cancelledBooking, "Booking cancelled and seats released successfully"));
     }
 }

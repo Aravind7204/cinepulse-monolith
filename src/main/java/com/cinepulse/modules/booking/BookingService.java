@@ -138,4 +138,40 @@ public class BookingService {
 
         return BookingResponse.fromEntity(booking);
     }
+    // --- New Booking Management Methods (CP-15) ---
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getUserBookings(Long userId) {
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(BookingResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public BookingResponse cancelBooking(Long userId, Long bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        // SECURITY CHECK: Ensure the user actually owns this booking
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new ConflictException("You are not authorized to cancel this booking.");
+        }
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.EXPIRED) {
+            throw new ConflictException("Booking is already " + booking.getStatus());
+        }
+
+        // Release the seats back to the public pool
+        for (ShowSeat seat : booking.getBookedSeats()) {
+            seat.setStatus(ShowSeatStatus.AVAILABLE);
+            seat.setLockedAt(null);
+        }
+        showSeatRepository.saveAll(booking.getBookedSeats());
+
+        // Update the booking status
+        booking.setStatus(BookingStatus.CANCELLED);
+
+        return BookingResponse.fromEntity(bookingRepository.save(booking));
+    }
 }
