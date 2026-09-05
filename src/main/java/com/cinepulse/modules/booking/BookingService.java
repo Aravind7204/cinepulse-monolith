@@ -44,9 +44,10 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse reserveSeats(CreateBookingRequest request) {
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.userId()));
+    public BookingResponse reserveSeats(Long userId, CreateBookingRequest request) {
+        // userId is now securely provided by the JWT Context, not the client payload
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Show show = showRepository.findById(request.showId())
                 .orElseThrow(() -> new ResourceNotFoundException("Show not found with id: " + request.showId()));
@@ -90,9 +91,14 @@ public class BookingService {
     }
 
     @Transactional
-    public PaymentResponse confirmPayment(Long bookingId, ProcessPaymentRequest request) {
+    public PaymentResponse confirmPayment(Long userId, Long bookingId, ProcessPaymentRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        // SECURITY CHECK: Prevent users from paying for someone else's booking
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new ConflictException("You are not authorized to modify this booking.");
+        }
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw new ConflictException("Booking cannot be paid. Current status: " + booking.getStatus());
@@ -121,9 +127,15 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBookingById(Long id) {
+    public BookingResponse getBookingById(Long userId, Long id) {
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
+
+        // SECURITY CHECK: Prevent users from viewing someone else's booking
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new ConflictException("You are not authorized to view this booking.");
+        }
+
         return BookingResponse.fromEntity(booking);
     }
 }
